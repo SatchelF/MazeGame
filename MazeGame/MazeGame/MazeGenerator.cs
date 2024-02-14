@@ -16,11 +16,11 @@ namespace MazeGame
 
     public class MazeGenerator
     {
-        private Cell[,] grid; // did this instead of a jagged array 
+        public Cell[,] grid; // did this instead of a jagged array 
         private HashSet<Cell> frontier = new HashSet<Cell>(); // frontier 
         private Random rand = new Random();
-        private int width;
-        private int height;
+        public int width;
+        public int height;
 
         public MazeGenerator(int width, int height) // constructor, and it Makes a grid 
         {
@@ -87,8 +87,8 @@ namespace MazeGame
         {
             List<Cell> adjacentMazeCells = new List<Cell>();
             CheckAndCollectAdjacentMazeCell(frontierCell.X, frontierCell.Y - 1, adjacentMazeCells); // North
-            CheckAndCollectAdjacentMazeCell(frontierCell.X + 1, frontierCell.Y, adjacentMazeCells); // East
             CheckAndCollectAdjacentMazeCell(frontierCell.X, frontierCell.Y + 1, adjacentMazeCells); // South
+            CheckAndCollectAdjacentMazeCell(frontierCell.X + 1, frontierCell.Y, adjacentMazeCells); // East
             CheckAndCollectAdjacentMazeCell(frontierCell.X - 1, frontierCell.Y, adjacentMazeCells); // West
 
             if (adjacentMazeCells.Count > 0)
@@ -149,8 +149,8 @@ namespace MazeGame
         private void AddToFrontier(Cell currentCell)
         {
             CheckAndAddNeighbor(currentCell.X, currentCell.Y - 1); // North
-            CheckAndAddNeighbor(currentCell.X + 1, currentCell.Y); // East
             CheckAndAddNeighbor(currentCell.X, currentCell.Y + 1); // South
+            CheckAndAddNeighbor(currentCell.X + 1, currentCell.Y); // East
             CheckAndAddNeighbor(currentCell.X - 1, currentCell.Y); // West
 
         }
