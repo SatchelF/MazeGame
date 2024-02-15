@@ -14,6 +14,8 @@ namespace MazeGame
         public Dictionary<string, Cell> Edges { get; set; } // read and write for edges
         public bool Visited { get; set; } = false; // read and write for visited. They are first all set to false. 
 
+        public bool HasBeenScored { get; set; } = false;
+
         public Cell(int x, int y) // my constructor
         {
             X = x;

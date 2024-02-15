@@ -34,7 +34,8 @@ namespace MazeGame
 
         // Timing and scoring
         private TimeSpan gameTimer;
-        private string highScore = "";
+        private int gameScore = 0;
+        private int highScore = 0;
         private bool gameActive;
 
         // Maze and player
@@ -172,7 +173,7 @@ namespace MazeGame
         {
             // Retrieve the current cell that the player is in using their grid position.
             Cell currentCell = mazeGenerator.grid[playerGridPosition.X, playerGridPosition.Y];
-
+            UpdateScore(playerGridPosition);
             // Determine the new position based on the direction of movement.
             // This is done by checking if there's an adjacent cell in the specified direction
             // and if the move is allowed (i.e., the edge in that direction is not null).
@@ -216,6 +217,11 @@ namespace MazeGame
 
             breadcrumbs.Clear(); // Clear any existing breadcrumbs from previous games.
             breadcrumbs.Add(playerGridPosition); // Optionally, add the starting position as the first breadcrumb.
+            gameScore = 0; // Reset score at the start of the game
+            showShortestPath = true;
+            UpdateShortestPath();
+            showHint = false; // Same as above, start with hints off
+            showShortestPath = false;
 
             UpdatePlayerScreenPosition();
         }
@@ -232,6 +238,12 @@ namespace MazeGame
         {
             GraphicsDevice.Clear(Color.Black);
             spriteBatch.Begin();
+
+            // Draw the current score
+            spriteBatch.DrawString(buttonFont, $"Score: {gameScore}", new Vector2(20, 40), Color.White);
+
+            // Draw the high score
+
 
             // Draw the game title at the top center
             Vector2 titleSize = titleFont.MeasureString("The Maze Game");
@@ -445,6 +457,40 @@ namespace MazeGame
             {
                 shortestPath = mazeGenerator.FindPath(playerGridPosition, endPoint);
             }
+        }
+
+        private void UpdateScore(Point playerPosition)
+        {
+            var cell = mazeGenerator.grid[playerPosition.X, playerPosition.Y];
+            if (!cell.HasBeenScored)
+            {
+                if (shortestPath.Contains(playerPosition))
+                {
+                    gameScore += 5;
+                }
+                else
+                {
+                    gameScore -= 2;
+                }
+                cell.HasBeenScored = true;
+
+                if (gameScore > highScore)
+                {
+                    highScore = gameScore; // Update high score if necessary
+                }
+            }
+        }
+
+        private bool IsAdjacentToShortestPath(Point playerPosition)
+        {
+            foreach (var pathPoint in shortestPath)
+            {
+                if (Math.Abs(pathPoint.X - playerPosition.X) <= 1 && Math.Abs(pathPoint.Y - playerPosition.Y) <= 1)
+                {
+                    return true;
+                }
+            }
+            return false;
         }
 
     }
