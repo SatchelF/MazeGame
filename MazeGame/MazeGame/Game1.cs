@@ -40,12 +40,16 @@ namespace MazeGame
         private Point playerGridPosition;
         private Point endPoint;
         private Vector2 playerScreenPosition;
+        private List<Point> shortestPath = new List<Point>();
+        private bool showShortestPath = false;
 
         public Game1()
         {
-            graphics = new GraphicsDeviceManager(this);
+
+        graphics = new GraphicsDeviceManager(this);
             Content.RootDirectory = "Content";
             IsMouseVisible = true;
+
         }
 
         protected override void Initialize()
@@ -137,6 +141,15 @@ namespace MazeGame
                 showBreadcrumbs = !showBreadcrumbs;
             }
 
+            if (currentKeyboardState.IsKeyDown(Keys.P) && previousKeyboardState.IsKeyUp(Keys.P))
+            {
+                showShortestPath = !showShortestPath;
+                if (showShortestPath)
+                {
+                    shortestPath = mazeGenerator.FindPath(playerGridPosition, endPoint);
+                }
+            }
+
 
 
             // Update the previous keyboard state at the end of the method
@@ -161,6 +174,11 @@ namespace MazeGame
                 if (!breadcrumbs.Contains(playerGridPosition))
                 {
                     breadcrumbs.Add(playerGridPosition);
+                }
+
+                if (showShortestPath)
+                {
+                    shortestPath = mazeGenerator.FindPath(playerGridPosition, endPoint); // Recalculate path
                 }
 
                 // Recalculate the player's screen position to ensure it matches their new position in the grid.
@@ -224,10 +242,20 @@ namespace MazeGame
                     foreach (var breadcrumb in breadcrumbs)
                     {
                         Vector2 breadcrumbPosition = new Vector2(breadcrumb.X * cellSize, breadcrumb.Y * cellSize) + new Vector2((graphics.PreferredBackBufferWidth - MazeDisplayWidth) / 2, (graphics.PreferredBackBufferHeight - MazeDisplayHeight) / 2);
-                        spriteBatch.Draw(breadcrumbTexture, new Rectangle((int)breadcrumbPosition.X, (int)breadcrumbPosition.Y, cellSize, cellSize), Color.White);
+                        spriteBatch.Draw(breadcrumbTexture, new Rectangle((int)breadcrumbPosition.X, (int)breadcrumbPosition.Y, cellSize, cellSize), Color.LightYellow);
                     }
                 }
             }
+
+            if (showShortestPath)
+            {
+                foreach (var point in shortestPath)
+                {
+                    Vector2 pathPosition = new Vector2(point.X * cellSize, point.Y * cellSize) + new Vector2((graphics.PreferredBackBufferWidth - MazeDisplayWidth) / 2, (graphics.PreferredBackBufferHeight - MazeDisplayHeight) / 2);
+                    spriteBatch.Draw(breadcrumbTexture, new Rectangle((int)pathPosition.X, (int)pathPosition.Y, cellSize, cellSize), Color.Blue); 
+                }
+            }
+
 
             spriteBatch.End();
             base.Draw(gameTime);

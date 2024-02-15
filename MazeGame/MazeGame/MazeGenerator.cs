@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using Microsoft.Xna.Framework;
 
 namespace MazeGame
 {
@@ -223,6 +224,42 @@ namespace MazeGame
                 }
             }
         }
+
+        public List<Point> FindPath(Point start, Point end)
+        {
+            var queue = new Queue<(Point, List<Point>)>();
+            var visited = new HashSet<Point>();
+            queue.Enqueue((start, new List<Point> { start }));
+
+            while (queue.Count > 0)
+            {
+                var (current, path) = queue.Dequeue();
+                if (current == end)
+                {
+                    return path;
+                }
+
+                visited.Add(current);
+
+                foreach (var direction in new[] { "n", "s", "e", "w" })
+                {
+                    if (grid[current.X, current.Y].Edges.ContainsKey(direction) && grid[current.X, current.Y].Edges[direction] != null)
+                    {
+                        var next = grid[current.X, current.Y].Edges[direction];
+                        var nextPoint = new Point(next.X, next.Y);
+                        if (!visited.Contains(nextPoint))
+                        {
+                            var newPath = new List<Point>(path) { nextPoint };
+                            queue.Enqueue((nextPoint, newPath));
+                        }
+                    }
+                }
+            }
+
+            return new List<Point>(); // Return an empty path if none found
+        }
+
+
 
 
     }
