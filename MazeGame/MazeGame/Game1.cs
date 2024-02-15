@@ -17,6 +17,8 @@ namespace MazeGame
         private const int MazeDisplayWidth = 525; // Adjusted width
         private const int MazeDisplayHeight = 525; // Adjusted height
         private KeyboardState previousKeyboardState;
+        private TimeSpan gameTimer; // Timer to track elapsed game time
+        private string highScore = ""; // Placeholder for high score display
 
         // Game state management
         public enum GameState
@@ -75,6 +77,10 @@ namespace MazeGame
         {
             base.Update(gameTime);
             ProcessInput();
+            if (currentState == GameState.Playing)
+            {
+                gameTimer += gameTime.ElapsedGameTime; // Update game timer
+            }
         }
 
         private void ProcessInput()
@@ -111,6 +117,7 @@ namespace MazeGame
             cellSize = Math.Min(MazeDisplayWidth / size, MazeDisplayHeight / size);
             playerGridPosition = new Point(0, 0); // Start at the top-left corner of the maze
             UpdatePlayerScreenPosition();
+            gameTimer = TimeSpan.Zero; // Reset game timer
         }
 
         private void UpdatePlayerScreenPosition()
@@ -139,6 +146,8 @@ namespace MazeGame
             {
                 DrawMaze();
                 DrawPlayer();
+                DrawHighScore();
+                DrawTimer();
             }
 
             spriteBatch.End();
@@ -212,6 +221,22 @@ namespace MazeGame
             spriteBatch.Draw(playerTexture, new Vector2(circleCenterX, circleCenterY), null, Color.White, 0f,
                              new Vector2(playerTexture.Width / 2, playerTexture.Height / 2), circleRadius / (playerTexture.Width / 2),
                              SpriteEffects.None, 0f);
+        }
+
+        private void DrawTimer()
+        {
+            // Draw timer above the maze
+            string timerText = "Time: " + gameTimer.TotalSeconds.ToString("F1") + "s";
+            Vector2 timerSize = buttonFont.MeasureString(timerText);
+            spriteBatch.DrawString(buttonFont, timerText, new Vector2((graphics.PreferredBackBufferWidth - timerSize.X) / 2, 70), Color.GhostWhite);
+        }
+
+        private void DrawHighScore()
+        {
+            // Draw high score next to the timer
+            string highScoreText = "High Score: " + highScore;
+            Vector2 highScoreSize = buttonFont.MeasureString(highScoreText);
+            spriteBatch.DrawString(buttonFont, highScoreText, new Vector2((graphics.PreferredBackBufferWidth - highScoreSize.X) / 2, 100), Color.GhostWhite);
         }
 
     }
