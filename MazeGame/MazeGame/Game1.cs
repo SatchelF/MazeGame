@@ -103,9 +103,33 @@ namespace MazeGame
                 else if (currentKeyboardState.IsKeyDown(Keys.F6) && previousKeyboardState.IsKeyUp(Keys.F6)) currentState = GameState.Credits;
             }
 
+            if (currentState == GameState.Playing)
+            {
+                if (currentKeyboardState.IsKeyDown(Keys.Up) && previousKeyboardState.IsKeyUp(Keys.Up))
+                    MovePlayer("n");
+                if (currentKeyboardState.IsKeyDown(Keys.Down) && previousKeyboardState.IsKeyUp(Keys.Down))
+                    MovePlayer("s");
+                if (currentKeyboardState.IsKeyDown(Keys.Left) && previousKeyboardState.IsKeyUp(Keys.Left))
+                    MovePlayer("w");
+                if (currentKeyboardState.IsKeyDown(Keys.Right) && previousKeyboardState.IsKeyUp(Keys.Right))
+                    MovePlayer("e");
+            }
+
+
             // Update the previous keyboard state at the end of the method
             previousKeyboardState = currentKeyboardState;
         }
+
+        private void MovePlayer(string direction)
+        {
+            Cell currentCell = mazeGenerator.grid[playerGridPosition.X, playerGridPosition.Y];
+            if (currentCell.Edges.ContainsKey(direction) && currentCell.Edges[direction] != null)
+            {
+                playerGridPosition = new Point(currentCell.Edges[direction].X, currentCell.Edges[direction].Y);
+                UpdatePlayerScreenPosition();
+            }
+        }
+
 
         private void StartGame(int size)
         {
@@ -122,8 +146,9 @@ namespace MazeGame
 
         private void UpdatePlayerScreenPosition()
         {
-            Vector2 mazePosition = new Vector2((graphics.PreferredBackBufferWidth - MazeDisplayWidth) / 2, (graphics.PreferredBackBufferHeight - MazeDisplayHeight) / 2);
-            playerScreenPosition = new Vector2(playerGridPosition.X * cellSize + mazePosition.X, playerGridPosition.Y * cellSize + mazePosition.Y);
+            // Calculate the offset to center the maze on the screen
+            Vector2 mazeOffset = new Vector2((graphics.PreferredBackBufferWidth - MazeDisplayWidth) / 2, (graphics.PreferredBackBufferHeight - MazeDisplayHeight) / 2);
+            playerScreenPosition = new Vector2(playerGridPosition.X * cellSize + mazeOffset.X, playerGridPosition.Y * cellSize + mazeOffset.Y);
         }
 
         protected override void Draw(GameTime gameTime)
