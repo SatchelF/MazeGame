@@ -2,6 +2,7 @@
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
 using System;
+using System.Collections.Generic;
 
 namespace MazeGame
 {
@@ -15,8 +16,11 @@ namespace MazeGame
         private Texture2D playerTexture; // Player texture
         private SpriteFont titleFont;
         private SpriteFont buttonFont;
+        private Texture2D breadcrumbTexture; // Breadcrumb texture
+        private bool showBreadcrumbs = false; // Flag to toggle breadcrumbs visibility
 
         // Display and gameplay settings
+        private List<Point> breadcrumbs = new List<Point>(); // List to track visited cells
         private const int MazeDisplayWidth = 525;
         private const int MazeDisplayHeight = 525;
         private int cellSize;
@@ -58,6 +62,7 @@ namespace MazeGame
             spriteBatch = new SpriteBatch(GraphicsDevice);
             titleFont = Content.Load<SpriteFont>("Title");
             buttonFont = Content.Load<SpriteFont>("button");
+            breadcrumbTexture = Content.Load<Texture2D>("breadcrumb");
 
             // Create and set a 1x1 white pixel texture
             pixelTexture = new Texture2D(GraphicsDevice, 1, 1);
@@ -127,6 +132,11 @@ namespace MazeGame
                     MovePlayer("e");
             }
 
+            if (currentKeyboardState.IsKeyDown(Keys.B) && previousKeyboardState.IsKeyUp(Keys.B))
+            {
+                showBreadcrumbs = !showBreadcrumbs;
+            }
+
 
 
             // Update the previous keyboard state at the end of the method
@@ -135,13 +145,31 @@ namespace MazeGame
 
         private void MovePlayer(string direction)
         {
+            // Retrieve the current cell that the player is in using their grid position.
             Cell currentCell = mazeGenerator.grid[playerGridPosition.X, playerGridPosition.Y];
+
+            // Determine the new position based on the direction of movement.
+            // This is done by checking if there's an adjacent cell in the specified direction
+            // and if the move is allowed (i.e., the edge in that direction is not null).
             if (currentCell.Edges.ContainsKey(direction) && currentCell.Edges[direction] != null)
             {
+                // Update the player's grid position to the new cell's position.
                 playerGridPosition = new Point(currentCell.Edges[direction].X, currentCell.Edges[direction].Y);
+
+                // After moving, add the new position to the breadcrumbs list if not already present.
+                // This part is crucial for the breadcrumb feature, allowing the game to track and later display the player's path.
+                if (!breadcrumbs.Contains(playerGridPosition))
+                {
+                    breadcrumbs.Add(playerGridPosition);
+                }
+
+                // Recalculate the player's screen position to ensure it matches their new position in the grid.
+                // This keeps the visual representation of the player in sync with their logical position within the maze.
                 UpdatePlayerScreenPosition();
             }
         }
+
+
 
 
         private void StartGame(int size)
@@ -151,13 +179,17 @@ namespace MazeGame
             mazeGenerator.GenerateMaze();
 
             cellSize = Math.Min(MazeDisplayWidth / size, MazeDisplayHeight / size);
-            playerGridPosition = new Point(0, 0); // Start at the top-left corner of the maze
-            endPoint = new Point(size - 1, size - 1); // End at the bottom-right corner
-            gameActive = true; // Game is now active
-            gameTimer = TimeSpan.Zero; // Reset game timer
+            playerGridPosition = new Point(0, 0); // Start at the top-left corner of the maze.
+            endPoint = new Point(size - 1, size - 1); // End at the bottom-right corner.
+            gameActive = true; // Game is now active.
+            gameTimer = TimeSpan.Zero; // Reset game timer.
+
+            breadcrumbs.Clear(); // Clear any existing breadcrumbs from previous games.
+            breadcrumbs.Add(playerGridPosition); // Optionally, add the starting position as the first breadcrumb.
 
             UpdatePlayerScreenPosition();
         }
+
 
         private void UpdatePlayerScreenPosition()
         {
@@ -176,10 +208,7 @@ namespace MazeGame
             spriteBatch.DrawString(titleFont, "The Maze Game", new Vector2((graphics.PreferredBackBufferWidth - titleSize.X) / 2, 20), Color.GhostWhite);
 
             // Draw menu choices on the left if in MainMenu or Playing state
-            if (currentState == GameState.MainMenu || currentState == GameState.Playing)
-            {
-                DrawMenuChoices();
-            }
+            DrawMenuChoices();
 
             // Center and draw the maze in the remaining space if in Playing state
             if (currentState == GameState.Playing)
@@ -188,6 +217,16 @@ namespace MazeGame
                 DrawPlayer();
                 DrawHighScore();
                 DrawTimer();
+
+                // Draw breadcrumbs if toggled on
+                if (showBreadcrumbs)
+                {
+                    foreach (var breadcrumb in breadcrumbs)
+                    {
+                        Vector2 breadcrumbPosition = new Vector2(breadcrumb.X * cellSize, breadcrumb.Y * cellSize) + new Vector2((graphics.PreferredBackBufferWidth - MazeDisplayWidth) / 2, (graphics.PreferredBackBufferHeight - MazeDisplayHeight) / 2);
+                        spriteBatch.Draw(breadcrumbTexture, new Rectangle((int)breadcrumbPosition.X, (int)breadcrumbPosition.Y, cellSize, cellSize), Color.White);
+                    }
+                }
             }
 
             spriteBatch.End();
