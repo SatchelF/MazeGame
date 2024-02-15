@@ -18,6 +18,8 @@ namespace MazeGame
         private SpriteFont buttonFont;
         private Texture2D breadcrumbTexture; // Breadcrumb texture
         private bool showBreadcrumbs = false; // Flag to toggle breadcrumbs visibility
+        private bool showHint = false; // Tracks hint visibility
+
 
         // Display and gameplay settings
         private List<Point> breadcrumbs = new List<Point>(); // List to track visited cells
@@ -141,13 +143,23 @@ namespace MazeGame
                 showBreadcrumbs = !showBreadcrumbs;
             }
 
+            // Toggle shortest path visibility
             if (currentKeyboardState.IsKeyDown(Keys.P) && previousKeyboardState.IsKeyUp(Keys.P))
             {
                 showShortestPath = !showShortestPath;
-                if (showShortestPath)
+                // Recalculate path if turning on the shortest path visibility
+                if (showShortestPath || showHint)
                 {
-                    shortestPath = mazeGenerator.FindPath(playerGridPosition, endPoint);
+                    UpdateShortestPath();
                 }
+            }
+
+            // Toggle hint visibility
+            if (currentKeyboardState.IsKeyDown(Keys.Y) && previousKeyboardState.IsKeyUp(Keys.Y))
+            {
+                showHint = !showHint;
+                // Always recalculate path when toggling the hint to ensure it's available
+                UpdateShortestPath();
             }
 
 
@@ -176,7 +188,7 @@ namespace MazeGame
                     breadcrumbs.Add(playerGridPosition);
                 }
 
-                if (showShortestPath)
+                if (showShortestPath || showHint)
                 {
                     shortestPath = mazeGenerator.FindPath(playerGridPosition, endPoint); // Recalculate path
                 }
@@ -252,8 +264,13 @@ namespace MazeGame
                 foreach (var point in shortestPath)
                 {
                     Vector2 pathPosition = new Vector2(point.X * cellSize, point.Y * cellSize) + new Vector2((graphics.PreferredBackBufferWidth - MazeDisplayWidth) / 2, (graphics.PreferredBackBufferHeight - MazeDisplayHeight) / 2);
-                    spriteBatch.Draw(breadcrumbTexture, new Rectangle((int)pathPosition.X, (int)pathPosition.Y, cellSize, cellSize), Color.Blue); 
+                    spriteBatch.Draw(breadcrumbTexture, new Rectangle((int)pathPosition.X, (int)pathPosition.Y, cellSize, cellSize), Color.Red); 
                 }
+            }
+
+            if (showHint && shortestPath.Count > 1) // Ensure there's a path and it's more than the current position
+            {
+                DrawHint(shortestPath[1]); // Draw hint for the next move
             }
 
 
@@ -407,6 +424,27 @@ namespace MazeGame
             string highScoreText = "High Score: " + highScore;
             Vector2 highScoreSize = buttonFont.MeasureString(highScoreText);
             spriteBatch.DrawString(buttonFont, highScoreText, new Vector2((graphics.PreferredBackBufferWidth - highScoreSize.X) / 2, 100), Color.GhostWhite);
+        }
+
+        private void DrawHint(Point nextMove)
+        {
+            Vector2 hintPosition = new Vector2(nextMove.X * cellSize, nextMove.Y * cellSize) +
+                                   new Vector2((graphics.PreferredBackBufferWidth - MazeDisplayWidth) / 2,
+                                               (graphics.PreferredBackBufferHeight - MazeDisplayHeight) / 2);
+
+            // Assuming you have a texture for the hint or use a simple colored rectangle
+            spriteBatch.Draw(pixelTexture,
+                             new Rectangle((int)hintPosition.X, (int)hintPosition.Y, cellSize, cellSize),
+                             Color.Yellow); // Use a distinct color for the hint
+        }
+
+        private void UpdateShortestPath()
+        {
+            // Calculate the shortest path if either display is enabled
+            if (showShortestPath || showHint)
+            {
+                shortestPath = mazeGenerator.FindPath(playerGridPosition, endPoint);
+            }
         }
 
     }
