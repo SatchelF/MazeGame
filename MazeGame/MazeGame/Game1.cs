@@ -110,15 +110,23 @@ namespace MazeGame
 
             if (currentState == GameState.Playing)
             {
-                if (currentKeyboardState.IsKeyDown(Keys.Up) && previousKeyboardState.IsKeyUp(Keys.Up))
+                // Up movement - Arrow Up, W, or I
+                if ((currentKeyboardState.IsKeyDown(Keys.Up) || currentKeyboardState.IsKeyDown(Keys.W) || currentKeyboardState.IsKeyDown(Keys.I)) && previousKeyboardState.IsKeyUp(Keys.Up) && previousKeyboardState.IsKeyUp(Keys.W) && previousKeyboardState.IsKeyUp(Keys.I))
                     MovePlayer("n");
-                if (currentKeyboardState.IsKeyDown(Keys.Down) && previousKeyboardState.IsKeyUp(Keys.Down))
+
+                // Down movement - Arrow Down, S, or K
+                if ((currentKeyboardState.IsKeyDown(Keys.Down) || currentKeyboardState.IsKeyDown(Keys.S) || currentKeyboardState.IsKeyDown(Keys.K)) && previousKeyboardState.IsKeyUp(Keys.Down) && previousKeyboardState.IsKeyUp(Keys.S) && previousKeyboardState.IsKeyUp(Keys.K))
                     MovePlayer("s");
-                if (currentKeyboardState.IsKeyDown(Keys.Left) && previousKeyboardState.IsKeyUp(Keys.Left))
+
+                // Left movement - Arrow Left, A, or J
+                if ((currentKeyboardState.IsKeyDown(Keys.Left) || currentKeyboardState.IsKeyDown(Keys.A) || currentKeyboardState.IsKeyDown(Keys.J)) && previousKeyboardState.IsKeyUp(Keys.Left) && previousKeyboardState.IsKeyUp(Keys.A) && previousKeyboardState.IsKeyUp(Keys.J))
                     MovePlayer("w");
-                if (currentKeyboardState.IsKeyDown(Keys.Right) && previousKeyboardState.IsKeyUp(Keys.Right))
+
+                // Right movement - Arrow Right, D, or L
+                if ((currentKeyboardState.IsKeyDown(Keys.Right) || currentKeyboardState.IsKeyDown(Keys.D) || currentKeyboardState.IsKeyDown(Keys.L)) && previousKeyboardState.IsKeyUp(Keys.Right) && previousKeyboardState.IsKeyUp(Keys.D) && previousKeyboardState.IsKeyUp(Keys.L))
                     MovePlayer("e");
             }
+
 
 
             // Update the previous keyboard state at the end of the method
