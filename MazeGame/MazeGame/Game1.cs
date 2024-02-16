@@ -34,11 +34,13 @@ namespace MazeGame
         public enum GameState { MainMenu, Playing}
         private bool showHighScores = false;
         private bool showCredits = false;
+        private Dictionary<int, int> highScoresBySize = new Dictionary<int, int>();
+
 
         // Timing and scoring
         private TimeSpan gameTimer;
         private int gameScore = 0;
-        private int highScore = 0;
+        private int[] highScores = new int[3]; // Array to store top 3 high scores
         private bool gameActive;
 
         // Maze and player
@@ -53,7 +55,13 @@ namespace MazeGame
         public Game1()
         {
 
-        graphics = new GraphicsDeviceManager(this);
+            // Initialize high scores for each maze size
+            highScoresBySize.Add(5, 0);  // For 5x5 maze
+            highScoresBySize.Add(10, 0); // For 10x10 maze
+            highScoresBySize.Add(15, 0); // For 15x15 maze
+            highScoresBySize.Add(20, 0); // For 20x20 maze
+
+            graphics = new GraphicsDeviceManager(this);
             Content.RootDirectory = "Content";
             IsMouseVisible = true;
 
@@ -302,13 +310,18 @@ namespace MazeGame
                 Vector2 creditsPosition = new Vector2((graphics.PreferredBackBufferWidth - creditsSize.X) / 2, graphics.PreferredBackBufferHeight - creditsSize.Y - 20);
                 spriteBatch.DrawString(buttonFont, creditsText, creditsPosition, Color.White);
             }
+
             if (showHighScores)
             {
-                // Draw high score if in HighScores state
-                string highScoreText = "High Score: " + highScore;
-                Vector2 highScorePosition = new Vector2(20, graphics.PreferredBackBufferHeight - 30); // Adjust as needed
-                spriteBatch.DrawString(buttonFont, highScoreText, highScorePosition, Color.Goldenrod);
+                int i = 0; 
+                foreach (var mazeSize in highScoresBySize.Keys.OrderBy(k => k))
+                {
+                    string highScoreText = $"High Score {mazeSize}x{mazeSize}: {highScoresBySize[mazeSize]}";
+                    spriteBatch.DrawString(buttonFont, highScoreText, new Vector2(20, graphics.PreferredBackBufferHeight - 120 + (i * 20)), Color.Goldenrod);
+                    i++;
+                }
             }
+
 
             // Draw shortest path if toggled on
             if (showShortestPath && shortestPathStack.Count > 0)
@@ -510,13 +523,13 @@ namespace MazeGame
             }
         }
 
+
+
         private void UpdateScore(Point playerPosition)
         {
             var cell = mazeGenerator.grid[playerPosition.X, playerPosition.Y];
-
             var pathAsList = shortestPathStack.ToList();
 
-            // Check if this cell has been visited before to avoid re-scoring.
             if (!cell.PlayerVisited)
             {
                 bool isOnShortestPath = pathAsList.Contains(playerPosition);
@@ -524,24 +537,24 @@ namespace MazeGame
                 if (isOnShortestPath)
                 {
                     gameScore += 5;
-                }                
+                }
                 else
                 {
                     gameScore -= 2;
                 }
 
-                // Mark the cell as visited.
                 cell.PlayerVisited = true;
             }
 
-            
-            if (gameScore > highScore)
+            // Update high score for the current maze size
+            int currentMazeSize = mazeGenerator.width; // Assuming width and height are the same
+            if (gameScore > highScoresBySize[currentMazeSize])
             {
-                highScore = gameScore;
+                highScoresBySize[currentMazeSize] = gameScore;
             }
         }
 
-        
+
 
 
 
