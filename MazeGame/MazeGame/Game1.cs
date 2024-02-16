@@ -3,6 +3,7 @@ using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace MazeGame
 {
@@ -30,7 +31,9 @@ namespace MazeGame
         // Game state management
         private KeyboardState previousKeyboardState;
         private GameState currentState;
-        public enum GameState { MainMenu, Playing, HighScores, Credits }
+        public enum GameState { MainMenu, Playing}
+        private bool showHighScores = false;
+        private bool showCredits = false;
 
         // Timing and scoring
         private TimeSpan gameTimer;
@@ -45,6 +48,7 @@ namespace MazeGame
         private Vector2 playerScreenPosition;
         private List<Point> shortestPath = new List<Point>();
         private bool showShortestPath = false;
+        private Stack<Point> shortestPathStack = new Stack<Point>();
 
         public Game1()
         {
@@ -86,40 +90,77 @@ namespace MazeGame
         {
             base.Update(gameTime);
             ProcessInput();
+
             if (currentState == GameState.Playing && gameActive)
             {
                 if (playerGridPosition != endPoint)
                 {
-                    gameTimer += gameTime.ElapsedGameTime; // Update game timer
+                    gameTimer += gameTime.ElapsedGameTime;
                 }
                 else
                 {
-                    gameActive = false; // Player reached the end, stop updating the timer
-                                        // Trigger any end game logic here (e.g., display victory message)
+                    gameActive = false;
                 }
             }
         }
+
 
         private void ProcessInput()
         {
             KeyboardState currentKeyboardState = Keyboard.GetState();
 
-            // Check for new game key presses only if they were not pressed in the previous frame
-            if ((currentState == GameState.MainMenu || currentState == GameState.Playing))
+            // Toggle visibility of breadcrumbs
+            if (currentKeyboardState.IsKeyDown(Keys.B) && previousKeyboardState.IsKeyUp(Keys.B))
             {
-                if (currentKeyboardState.IsKeyDown(Keys.F1) && previousKeyboardState.IsKeyUp(Keys.F1)) StartGame(5);
-                else if (currentKeyboardState.IsKeyDown(Keys.F2) && previousKeyboardState.IsKeyUp(Keys.F2)) StartGame(10);
-                else if (currentKeyboardState.IsKeyDown(Keys.F3) && previousKeyboardState.IsKeyUp(Keys.F3)) StartGame(15);
-                else if (currentKeyboardState.IsKeyDown(Keys.F4) && previousKeyboardState.IsKeyUp(Keys.F4)) StartGame(20);
+                showBreadcrumbs = !showBreadcrumbs;
             }
 
-            // Continue to allow navigation to HighScores and Credits only from the MainMenu
-            if (currentState == GameState.MainMenu)
+            // Toggle visibility of the shortest path
+            if (currentKeyboardState.IsKeyDown(Keys.P) && previousKeyboardState.IsKeyUp(Keys.P))
             {
-                if (currentKeyboardState.IsKeyDown(Keys.F5) && previousKeyboardState.IsKeyUp(Keys.F5)) currentState = GameState.HighScores;
-                else if (currentKeyboardState.IsKeyDown(Keys.F6) && previousKeyboardState.IsKeyUp(Keys.F6)) currentState = GameState.Credits;
+                showShortestPath = !showShortestPath;
+                if (showShortestPath || showHint)
+                {
+                    UpdateShortestPath();
+                }
             }
 
+            // Toggle hint visibility
+            if (currentKeyboardState.IsKeyDown(Keys.Y) && previousKeyboardState.IsKeyUp(Keys.Y))
+            {
+                showHint = !showHint;
+                UpdateShortestPath();
+            }
+
+            // Toggle visibility of high scores
+            if (currentKeyboardState.IsKeyDown(Keys.F5) && previousKeyboardState.IsKeyUp(Keys.F5))
+            {
+                showHighScores = !showHighScores;
+            }
+
+            // Toggle visibility of credits
+            if (currentKeyboardState.IsKeyDown(Keys.F6) && previousKeyboardState.IsKeyUp(Keys.F6))
+            {
+                showCredits = !showCredits;
+            }
+
+            // Game controls
+            if (currentState == GameState.Playing)
+            {
+                MovePlayerBasedOnInput(currentKeyboardState);
+            }
+
+            // Starting a new game
+            if (currentKeyboardState.IsKeyDown(Keys.F1) && previousKeyboardState.IsKeyUp(Keys.F1)) StartGame(5);
+            else if (currentKeyboardState.IsKeyDown(Keys.F2) && previousKeyboardState.IsKeyUp(Keys.F2)) StartGame(10);
+            else if (currentKeyboardState.IsKeyDown(Keys.F3) && previousKeyboardState.IsKeyUp(Keys.F3)) StartGame(15);
+            else if (currentKeyboardState.IsKeyDown(Keys.F4) && previousKeyboardState.IsKeyUp(Keys.F4)) StartGame(20);
+
+            previousKeyboardState = currentKeyboardState;
+        }
+
+        private void MovePlayerBasedOnInput(KeyboardState currentKeyboardState)
+        {
             if (currentState == GameState.Playing)
             {
                 // Up movement - Arrow Up, W, or I
@@ -138,35 +179,6 @@ namespace MazeGame
                 if ((currentKeyboardState.IsKeyDown(Keys.Right) || currentKeyboardState.IsKeyDown(Keys.D) || currentKeyboardState.IsKeyDown(Keys.L)) && previousKeyboardState.IsKeyUp(Keys.Right) && previousKeyboardState.IsKeyUp(Keys.D) && previousKeyboardState.IsKeyUp(Keys.L))
                     MovePlayer("e");
             }
-
-            if (currentKeyboardState.IsKeyDown(Keys.B) && previousKeyboardState.IsKeyUp(Keys.B))
-            {
-                showBreadcrumbs = !showBreadcrumbs;
-            }
-
-            // Toggle shortest path visibility
-            if (currentKeyboardState.IsKeyDown(Keys.P) && previousKeyboardState.IsKeyUp(Keys.P))
-            {
-                showShortestPath = !showShortestPath;
-                // Recalculate path if turning on the shortest path visibility
-                if (showShortestPath || showHint)
-                {
-                    UpdateShortestPath();
-                }
-            }
-
-            // Toggle hint visibility
-            if (currentKeyboardState.IsKeyDown(Keys.Y) && previousKeyboardState.IsKeyUp(Keys.Y))
-            {
-                showHint = !showHint;
-                // Always recalculate path when toggling the hint to ensure it's available
-                UpdateShortestPath();
-            }
-
-
-
-            // Update the previous keyboard state at the end of the method
-            previousKeyboardState = currentKeyboardState;
         }
 
         private void MovePlayer(string direction)
@@ -187,7 +199,16 @@ namespace MazeGame
 
                 if (showShortestPath || showHint)
                 {
-                    shortestPath = mazeGenerator.FindPath(playerGridPosition, endPoint); // Recalculate path
+                    // If moving off the path, recalculate and update the stack
+                    if (!shortestPathStack.Peek().Equals(playerGridPosition))
+                    {
+                        UpdateShortestPath();
+                    }
+                    else
+                    {
+                        // If the move is along the path, just pop the next step (the current position)
+                        shortestPathStack.Pop();
+                    }
                 }
 
                 UpdatePlayerScreenPosition(); // Update the player's screen position
@@ -233,24 +254,40 @@ namespace MazeGame
             GraphicsDevice.Clear(Color.Black);
             spriteBatch.Begin();
 
-            // Draw the current score
-            spriteBatch.DrawString(buttonFont, $"Score: {gameScore}", new Vector2(20, 40), Color.White);
+            string[] legendLines = {
+                "B: Toggle Breadcrumbs",
+                "P: Toggle Shortest Path",
+                "Y: Toggle Hint"
+            };
+            Vector2 legendPosition = new Vector2(graphics.PreferredBackBufferWidth - 250, 700); // Adjust for your layout
+            foreach (string line in legendLines)
+            {
+                spriteBatch.DrawString(buttonFont, line, legendPosition, Color.White);
+                legendPosition.Y += 20; // Adjust line spacing as needed
+            }
 
 
+
+            // Draw the maze, player, breadcrumbs, etc., only if the game is in the Playing state and not completed
 
             // Draw the game title at the top center
             Vector2 titleSize = titleFont.MeasureString("The Maze Game");
-            spriteBatch.DrawString(titleFont, "The Maze Game", new Vector2((graphics.PreferredBackBufferWidth - titleSize.X) / 2, 20), Color.GhostWhite);
+                spriteBatch.DrawString(titleFont, "The Maze Game", new Vector2((graphics.PreferredBackBufferWidth - titleSize.X) / 2, 20), Color.GhostWhite);
 
-            // Draw menu choices on the left if in MainMenu or Playing state
-            DrawMenuChoices();
+                // Draw the current score
+                spriteBatch.DrawString(buttonFont, $"Score: {gameScore}", new Vector2(20, 40), Color.White);
 
-            // Center and draw the maze in the remaining space if in Playing state
-            if (currentState == GameState.Playing)
-            {
+                // Draw menu choices on the left if in MainMenu or Playing state
+                DrawMenuChoices();
+
+                // Draw the maze
                 DrawMaze();
+
+                // Draw the player
                 DrawPlayer();
-                DrawHighScore();
+
+                // Draw the high score and timer
+                
                 DrawTimer();
 
                 // Draw breadcrumbs if toggled on
@@ -262,26 +299,71 @@ namespace MazeGame
                         spriteBatch.Draw(breadcrumbTexture, new Rectangle((int)breadcrumbPosition.X, (int)breadcrumbPosition.Y, cellSize, cellSize), Color.LightYellow);
                     }
                 }
+
+            if (showCredits)
+            {
+                string creditsText = "Credits:\nSatchel Fausett\nsatchcollege@gmail.com";
+                // Calculate position based on screen size and text size for centered alignment
+                Vector2 creditsSize = buttonFont.MeasureString(creditsText);
+                Vector2 creditsPosition = new Vector2((graphics.PreferredBackBufferWidth - creditsSize.X) / 2, graphics.PreferredBackBufferHeight - creditsSize.Y - 20);
+                spriteBatch.DrawString(buttonFont, creditsText, creditsPosition, Color.White);
+            }
+            if (showHighScores)
+            {
+                // Draw high score if in HighScores state
+                string highScoreText = "High Score: " + highScore;
+                Vector2 highScorePosition = new Vector2(20, graphics.PreferredBackBufferHeight - 30); // Adjust as needed
+                spriteBatch.DrawString(buttonFont, highScoreText, highScorePosition, Color.White);
             }
 
-            if (showShortestPath)
-            {
-                foreach (var point in shortestPath)
+            // Draw shortest path if toggled on
+            if (showShortestPath && shortestPathStack.Count > 0)
                 {
-                    Vector2 pathPosition = new Vector2(point.X * cellSize, point.Y * cellSize) + new Vector2((graphics.PreferredBackBufferWidth - MazeDisplayWidth) / 2, (graphics.PreferredBackBufferHeight - MazeDisplayHeight) / 2);
-                    spriteBatch.Draw(breadcrumbTexture, new Rectangle((int)pathPosition.X, (int)pathPosition.Y, cellSize, cellSize), Color.Red); 
+                    var pathArray = shortestPathStack.ToArray(); // Convert stack to array for drawing
+                    for (int i = pathArray.Length - 1; i >= 0; i--) // Draw from the start to the end point
+                    {
+                        Vector2 pathPosition = new Vector2(pathArray[i].X * cellSize, pathArray[i].Y * cellSize) + new Vector2((graphics.PreferredBackBufferWidth - MazeDisplayWidth) / 2, (graphics.PreferredBackBufferHeight - MazeDisplayHeight) / 2);
+                        spriteBatch.Draw(breadcrumbTexture, new Rectangle((int)pathPosition.X, (int)pathPosition.Y, cellSize, cellSize), Color.Red);
+                    }
                 }
-            }
 
-            if (showHint && shortestPath.Count > 1) // Ensure there's a path and it's more than the current position
-            {
-                DrawHint(shortestPath[1]); // Draw hint for the next move
-            }
+                // Draw hint if toggled on and there are steps to follow
+                if (showHint && shortestPathStack.Count > 0)
+                {
+                    if (shortestPathStack.Peek().Equals(playerGridPosition) && shortestPathStack.Count > 1)
+                    {
+                        shortestPathStack.Pop(); // Remove the current position to access the next step.
+                        var hintPoint = shortestPathStack.Peek(); // Peek the true next move.
+                        DrawHint(hintPoint); // Draw the hint with the corrected next step.
+                        shortestPathStack.Push(playerGridPosition); // Restore the current position back to the stack.
+                    }
+                    else if (!shortestPathStack.Peek().Equals(playerGridPosition))
+                    {
+                        var hintPoint = shortestPathStack.Peek(); // If the top doesn't match the player's position, it's already the next move.
+                        DrawHint(hintPoint);
+                    }
+                }
 
-
+            // If there are additional states or UI elements to draw, include them here.
+       
             spriteBatch.End();
             base.Draw(gameTime);
         }
+
+
+        private void DrawHint(Point nextMove)
+        {
+            Vector2 hintPosition = new Vector2(nextMove.X * cellSize, nextMove.Y * cellSize) +
+                                   new Vector2((graphics.PreferredBackBufferWidth - MazeDisplayWidth) / 2,
+                                               (graphics.PreferredBackBufferHeight - MazeDisplayHeight) / 2);
+
+            // Assuming you have a texture for the hint or use a simple colored rectangle
+            spriteBatch.Draw(pixelTexture,
+                             new Rectangle((int)hintPosition.X, (int)hintPosition.Y, cellSize, cellSize),
+                             Color.Yellow); // Use a distinct color for the hint
+        }
+
+
 
         private void DrawMenuChoices()
         {
@@ -431,55 +513,61 @@ namespace MazeGame
             spriteBatch.DrawString(buttonFont, highScoreText, new Vector2((graphics.PreferredBackBufferWidth - highScoreSize.X) / 2, 100), Color.GhostWhite);
         }
 
-        private void DrawHint(Point nextMove)
-        {
-            Vector2 hintPosition = new Vector2(nextMove.X * cellSize, nextMove.Y * cellSize) +
-                                   new Vector2((graphics.PreferredBackBufferWidth - MazeDisplayWidth) / 2,
-                                               (graphics.PreferredBackBufferHeight - MazeDisplayHeight) / 2);
-
-            // Assuming you have a texture for the hint or use a simple colored rectangle
-            spriteBatch.Draw(pixelTexture,
-                             new Rectangle((int)hintPosition.X, (int)hintPosition.Y, cellSize, cellSize),
-                             Color.Yellow); // Use a distinct color for the hint
-        }
 
         private void UpdateShortestPath()
         {
-            // Calculate the shortest path if either display is enabled
             if (showShortestPath || showHint)
             {
-                shortestPath = mazeGenerator.FindPath(playerGridPosition, endPoint);
+                shortestPath = mazeGenerator.FindPath(playerGridPosition, endPoint); // Calculate the shortest path
+                shortestPathStack.Clear(); // Clear existing stack
+                                           // Reverse the path to push onto the stack so the next step is always at the top
+                foreach (var step in shortestPath.AsEnumerable().Reverse())
+                {
+                    shortestPathStack.Push(step);
+                }
             }
         }
 
         private void UpdateScore(Point playerPosition)
         {
             var cell = mazeGenerator.grid[playerPosition.X, playerPosition.Y];
-            if (!cell.HasBeenScored && !cell.PlayerVisited)
+
+            // Convert the shortest path stack to a list for easier checking.
+            var pathAsList = shortestPathStack.ToList();
+
+            // Check if this cell has been visited before to avoid re-scoring.
+            if (!cell.PlayerVisited)
             {
-                if (shortestPath.Contains(playerPosition))
+                bool isOnShortestPath = pathAsList.Contains(playerPosition);
+
+                // Only award +5 points if the player's current position is directly on the shortest path.
+                if (isOnShortestPath)
                 {
                     gameScore += 5;
-                    cell.HasBeenScored = true;
-                }
-  
+                }                
                 else
                 {
+                    // Optionally, deduct points or do nothing if not on or adjacent to the shortest path.
                     gameScore -= 2;
                 }
+
+                // Mark the cell as visited.
+                cell.PlayerVisited = true;
             }
 
-            // Mark the cell as visited by the player after scoring
-            cell.PlayerVisited = true;
-
+            // Optionally, update the high score.
             if (gameScore > highScore)
             {
                 highScore = gameScore;
             }
         }
 
+        
 
-      
+
+
+
+
 
     }
 }
