@@ -173,6 +173,7 @@ namespace MazeGame
         {
             // Retrieve the current cell that the player is in using their grid position.
             Cell currentCell = mazeGenerator.grid[playerGridPosition.X, playerGridPosition.Y];
+            UpdateScore(playerGridPosition);
             // Determine the new position based on the direction of movement
             if (currentCell.Edges.ContainsKey(direction) && currentCell.Edges[direction] != null)
             {
@@ -461,11 +462,7 @@ namespace MazeGame
                     gameScore += 5;
                     cell.HasBeenScored = true;
                 }
-                else if (IsAdjacentToShortestPath(playerPosition))
-                {
-                    gameScore -= 1;
-                    // Adjacent cells may not be marked as scored to allow -1 scoring once
-                }
+  
                 else
                 {
                     gameScore -= 2;
@@ -482,17 +479,7 @@ namespace MazeGame
         }
 
 
-        private bool IsAdjacentToShortestPath(Point playerPosition)
-        {
-            foreach (var pathPoint in shortestPath)
-            {
-                if (Math.Abs(pathPoint.X - playerPosition.X) <= 1 && Math.Abs(pathPoint.Y - playerPosition.Y) <= 1)
-                {
-                    return true;
-                }
-            }
-            return false;
-        }
+      
 
     }
 }
