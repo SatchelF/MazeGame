@@ -1,35 +1,23 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using System.Collections.Generic;
 
-namespace MazeGame
+public class Cell
 {
+    public int X { get; }
+    public int Y { get; }
+    public Dictionary<string, Cell> Edges { get; set; }
+    public bool Visited { get; set; } = false; // Used in maze generation
+    public bool PlayerVisited { get; set; } = false; // Track if the player has visited the cell
+    public bool HasBeenScored { get; set; } = false; // Track if the cell has been scored
 
-    public class Cell
+    public Cell(int x, int y)
     {
-        public int X { get; } // read only for X
-        public int Y { get; } // read only for Y
-        public Dictionary<string, Cell> Edges { get; set; } // read and write for edges
-        public bool Visited { get; set; } = false; // read and write for visited. They are first all set to false. 
-
-        public bool HasBeenScored { get; set; } = false;
-
-        public Cell(int x, int y) // my constructor
-        {
-            X = x;
-            Y = y;
-            Edges = new Dictionary<string, Cell> { // Edges have a direction and a reference to another cell. 
+        X = x;
+        Y = y;
+        Edges = new Dictionary<string, Cell> {
             {"n", null},
             {"s", null},
             {"e", null},
             {"w", null}
         };
-        }
-
-
-
     }
-
 }

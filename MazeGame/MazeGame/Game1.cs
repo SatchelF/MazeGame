@@ -173,20 +173,15 @@ namespace MazeGame
         {
             // Retrieve the current cell that the player is in using their grid position.
             Cell currentCell = mazeGenerator.grid[playerGridPosition.X, playerGridPosition.Y];
-            UpdateScore(playerGridPosition);
-            // Determine the new position based on the direction of movement.
-            // This is done by checking if there's an adjacent cell in the specified direction
-            // and if the move is allowed (i.e., the edge in that direction is not null).
+            // Determine the new position based on the direction of movement
             if (currentCell.Edges.ContainsKey(direction) && currentCell.Edges[direction] != null)
             {
-                // Update the player's grid position to the new cell's position.
                 playerGridPosition = new Point(currentCell.Edges[direction].X, currentCell.Edges[direction].Y);
 
-                // After moving, add the new position to the breadcrumbs list if not already present.
-                // This part is crucial for the breadcrumb feature, allowing the game to track and later display the player's path.
-                if (!breadcrumbs.Contains(playerGridPosition))
+                // After updating the player's grid position, add the new position to the breadcrumbs list
+                if (!breadcrumbs.Contains(playerGridPosition)) // Check if the new position is not already in the breadcrumbs
                 {
-                    breadcrumbs.Add(playerGridPosition);
+                    breadcrumbs.Add(playerGridPosition); // Add the new position to the breadcrumbs list
                 }
 
                 if (showShortestPath || showHint)
@@ -194,9 +189,7 @@ namespace MazeGame
                     shortestPath = mazeGenerator.FindPath(playerGridPosition, endPoint); // Recalculate path
                 }
 
-                // Recalculate the player's screen position to ensure it matches their new position in the grid.
-                // This keeps the visual representation of the player in sync with their logical position within the maze.
-                UpdatePlayerScreenPosition();
+                UpdatePlayerScreenPosition(); // Update the player's screen position
             }
         }
 
@@ -242,7 +235,6 @@ namespace MazeGame
             // Draw the current score
             spriteBatch.DrawString(buttonFont, $"Score: {gameScore}", new Vector2(20, 40), Color.White);
 
-            // Draw the high score
 
 
             // Draw the game title at the top center
@@ -462,24 +454,33 @@ namespace MazeGame
         private void UpdateScore(Point playerPosition)
         {
             var cell = mazeGenerator.grid[playerPosition.X, playerPosition.Y];
-            if (!cell.HasBeenScored)
+            if (!cell.HasBeenScored && !cell.PlayerVisited)
             {
                 if (shortestPath.Contains(playerPosition))
                 {
                     gameScore += 5;
+                    cell.HasBeenScored = true;
+                }
+                else if (IsAdjacentToShortestPath(playerPosition))
+                {
+                    gameScore -= 1;
+                    // Adjacent cells may not be marked as scored to allow -1 scoring once
                 }
                 else
                 {
                     gameScore -= 2;
                 }
-                cell.HasBeenScored = true;
+            }
 
-                if (gameScore > highScore)
-                {
-                    highScore = gameScore; // Update high score if necessary
-                }
+            // Mark the cell as visited by the player after scoring
+            cell.PlayerVisited = true;
+
+            if (gameScore > highScore)
+            {
+                highScore = gameScore;
             }
         }
+
 
         private bool IsAdjacentToShortestPath(Point playerPosition)
         {
