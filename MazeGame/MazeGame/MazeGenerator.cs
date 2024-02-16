@@ -1,8 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using Microsoft.Xna.Framework;
 
 namespace MazeGame
@@ -43,7 +41,7 @@ namespace MazeGame
             }
         }
 
-        public void PrintGrid()
+        public void PrintGrid() // for testing 
         {
             for (int y = 0; y < height; y++)
             {
@@ -55,7 +53,7 @@ namespace MazeGame
             }
         }
 
-        public void GenerateMaze()
+        public void GenerateMaze() // main generation function
         {
             Cell startingCell = grid[rand.Next(width), rand.Next(height)]; // 1. Start from a Single Cell: Mark a random cell as part of the maze.
             startingCell.Visited = true;
@@ -109,7 +107,7 @@ namespace MazeGame
         }
 
 
-        private void ConnectCells(Cell frontierCell, Cell mazeCell)
+        private void ConnectCells(Cell frontierCell, Cell mazeCell) // connects cells based on if they are part of the maze 
         {
             if (frontierCell.X == mazeCell.X)
             {
@@ -147,7 +145,7 @@ namespace MazeGame
 
 
 
-        private void AddToFrontier(Cell currentCell)
+        private void AddToFrontier(Cell currentCell) // adds cells neighbors to the frontier 
         {
             CheckAndAddNeighbor(currentCell.X, currentCell.Y - 1); // North
             CheckAndAddNeighbor(currentCell.X, currentCell.Y + 1); // South
@@ -186,7 +184,7 @@ namespace MazeGame
                 return false;
             }
         }
-        public void PrintMaze()
+        public void PrintMaze() // for printing into the console. I used this for testing. 
         {
             // Print the top border
             const char PASSAGE_CHAR = ' ';
@@ -225,7 +223,7 @@ namespace MazeGame
             }
         }
 
-        public List<Point> FindPath(Point start, Point end)
+        public List<Point> FindPath(Point start, Point end) // bfs algortihm for shortest path. 
         {
             var queue = new Queue<(Point, List<Point>)>();
             var visited = new HashSet<Point>();

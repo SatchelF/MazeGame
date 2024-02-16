@@ -4,7 +4,7 @@ public class Cell
 {
     public int X { get; }
     public int Y { get; }
-    public Dictionary<string, Cell> Edges { get; set; }
+    public Dictionary<string, Cell> Edges { get; set; } // keep track of edges
     public bool Visited { get; set; } = false; // Used in maze generation
     public bool PlayerVisited { get; set; } = false; // Track if the player has visited the cell
     public bool HasBeenScored { get; set; } = false; // Track if the cell has been scored

@@ -126,7 +126,7 @@ namespace MazeGame
             }
 
             // Toggle hint visibility
-            if (currentKeyboardState.IsKeyDown(Keys.Y) && previousKeyboardState.IsKeyUp(Keys.Y))
+            if (currentKeyboardState.IsKeyDown(Keys.H) && previousKeyboardState.IsKeyUp(Keys.H))
             {
                 showHint = !showHint;
                 UpdateShortestPath();
@@ -186,7 +186,6 @@ namespace MazeGame
             // Retrieve the current cell that the player is in using their grid position.
             Cell currentCell = mazeGenerator.grid[playerGridPosition.X, playerGridPosition.Y];
             UpdateScore(playerGridPosition);
-            // Determine the new position based on the direction of movement
             if (currentCell.Edges.ContainsKey(direction) && currentCell.Edges[direction] != null)
             {
                 playerGridPosition = new Point(currentCell.Edges[direction].X, currentCell.Edges[direction].Y);
@@ -206,7 +205,6 @@ namespace MazeGame
                     }
                     else
                     {
-                        // If the move is along the path, just pop the next step (the current position)
                         shortestPathStack.Pop();
                     }
                 }
@@ -231,11 +229,11 @@ namespace MazeGame
             gameTimer = TimeSpan.Zero; // Reset game timer.
 
             breadcrumbs.Clear(); // Clear any existing breadcrumbs from previous games.
-            breadcrumbs.Add(playerGridPosition); // Optionally, add the starting position as the first breadcrumb.
+            breadcrumbs.Add(playerGridPosition); 
             gameScore = 0; // Reset score at the start of the game
             showShortestPath = true;
             UpdateShortestPath();
-            showHint = false; // Same as above, start with hints off
+            showHint = false; 
             showShortestPath = false;
 
             UpdatePlayerScreenPosition();
@@ -257,18 +255,14 @@ namespace MazeGame
             string[] legendLines = {
                 "B: Toggle Breadcrumbs",
                 "P: Toggle Shortest Path",
-                "Y: Toggle Hint"
+                "H: Toggle Hint"
             };
             Vector2 legendPosition = new Vector2(graphics.PreferredBackBufferWidth - 250, 700); // Adjust for your layout
             foreach (string line in legendLines)
             {
                 spriteBatch.DrawString(buttonFont, line, legendPosition, Color.White);
-                legendPosition.Y += 20; // Adjust line spacing as needed
+                legendPosition.Y += 20; 
             }
-
-
-
-            // Draw the maze, player, breadcrumbs, etc., only if the game is in the Playing state and not completed
 
             // Draw the game title at the top center
             Vector2 titleSize = titleFont.MeasureString("The Maze Game");
@@ -313,7 +307,7 @@ namespace MazeGame
                 // Draw high score if in HighScores state
                 string highScoreText = "High Score: " + highScore;
                 Vector2 highScorePosition = new Vector2(20, graphics.PreferredBackBufferHeight - 30); // Adjust as needed
-                spriteBatch.DrawString(buttonFont, highScoreText, highScorePosition, Color.White);
+                spriteBatch.DrawString(buttonFont, highScoreText, highScorePosition, Color.Goldenrod);
             }
 
             // Draw shortest path if toggled on
@@ -343,8 +337,6 @@ namespace MazeGame
                         DrawHint(hintPoint);
                     }
                 }
-
-            // If there are additional states or UI elements to draw, include them here.
        
             spriteBatch.End();
             base.Draw(gameTime);
@@ -357,10 +349,10 @@ namespace MazeGame
                                    new Vector2((graphics.PreferredBackBufferWidth - MazeDisplayWidth) / 2,
                                                (graphics.PreferredBackBufferHeight - MazeDisplayHeight) / 2);
 
-            // Assuming you have a texture for the hint or use a simple colored rectangle
+          
             spriteBatch.Draw(pixelTexture,
                              new Rectangle((int)hintPosition.X, (int)hintPosition.Y, cellSize, cellSize),
-                             Color.Yellow); // Use a distinct color for the hint
+                             Color.Goldenrod); 
         }
 
 
@@ -398,7 +390,6 @@ namespace MazeGame
                 Color.White
             );
 
-            // Prepare for drawing walls
             int lineWidth = 3;
 
             // Drawing walls within the maze
@@ -489,7 +480,7 @@ namespace MazeGame
             float circleCenterY = playerScreenPosition.Y + cellSize / 2 + 10;
 
             // Calculate the radius of the player circle (half of the cell size plus additional size)
-            float circleRadius = (cellSize / 2) + 80; // Adjust the additional size as needed
+            float circleRadius = (cellSize / 2) + 80; 
 
             // Draw the player circle
             spriteBatch.Draw(playerTexture, new Vector2(circleCenterX, circleCenterY), null, Color.White, 0f,
@@ -504,15 +495,6 @@ namespace MazeGame
             Vector2 timerSize = buttonFont.MeasureString(timerText);
             spriteBatch.DrawString(buttonFont, timerText, new Vector2((graphics.PreferredBackBufferWidth - timerSize.X) / 2, 70), Color.GhostWhite);
         }
-
-        private void DrawHighScore()
-        {
-            // Draw high score next to the timer
-            string highScoreText = "High Score: " + highScore;
-            Vector2 highScoreSize = buttonFont.MeasureString(highScoreText);
-            spriteBatch.DrawString(buttonFont, highScoreText, new Vector2((graphics.PreferredBackBufferWidth - highScoreSize.X) / 2, 100), Color.GhostWhite);
-        }
-
 
         private void UpdateShortestPath()
         {
@@ -532,7 +514,6 @@ namespace MazeGame
         {
             var cell = mazeGenerator.grid[playerPosition.X, playerPosition.Y];
 
-            // Convert the shortest path stack to a list for easier checking.
             var pathAsList = shortestPathStack.ToList();
 
             // Check if this cell has been visited before to avoid re-scoring.
@@ -540,14 +521,12 @@ namespace MazeGame
             {
                 bool isOnShortestPath = pathAsList.Contains(playerPosition);
 
-                // Only award +5 points if the player's current position is directly on the shortest path.
                 if (isOnShortestPath)
                 {
                     gameScore += 5;
                 }                
                 else
                 {
-                    // Optionally, deduct points or do nothing if not on or adjacent to the shortest path.
                     gameScore -= 2;
                 }
 
@@ -555,7 +534,7 @@ namespace MazeGame
                 cell.PlayerVisited = true;
             }
 
-            // Optionally, update the high score.
+            
             if (gameScore > highScore)
             {
                 highScore = gameScore;
